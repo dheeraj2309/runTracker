@@ -1,122 +1,65 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { RunProvider, useRun } from './context/RunContext';
+import EnterScreen from './components/EnterScreen';
+import MapView from './components/MapView';
+import Dashboard from './components/Dashboard';
+import Controls from './components/Controls';
+import RunStatusIndicator from './components/RunStatusIndicator';
+import SummaryScreen from './components/SummaryScreen';
+import GpsErrorBanner from './components/GpsErrorBanner';
+import { useGeolocation } from './hooks/useGeolocation';
+import { getAllPoints } from './lib/runStats';
 
-function App() {
-  const [count, setCount] = useState(0)
+function AppShell() {
+  const { state } = useRun();
+  const { isGpsLost, reconnectSignal } = useGeolocation();
+
+  if (state.status === 'idle'|| state.status === 'calibrating') {
+    return <EnterScreen />;
+  }
+
+  const points = getAllPoints(state.segments);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="relative h-full w-full">
+      {state.currentPosition ? (
+        <MapView
+          center={state.currentPosition}
+          points={points.length > 0 ? points : undefined}
+          isGpsLost={state.status === 'running' ? isGpsLost : false}
+          autoRecenterSignal={reconnectSignal}
+        />
+      ) : (
+        // Safety net: currentPosition should always exist by 'ready', but fall back rather than a blank screen.
+        <div className="flex h-full items-center justify-center text-sm text-neutral-400">Map unavailable</div>
+      )}
 
-      <div className="ticks"></div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {state.status === 'running' && isGpsLost && (
+        <GpsErrorBanner message="GPS lost, reconnecting…" tone="warning" />
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {(state.status === 'running' || state.status === 'paused') && (
+        <>
+          <Dashboard />
+          <RunStatusIndicator />
+        </>
+      )}
+
+      <Controls />
+
+      {state.status === 'finished' && (
+        <div className="absolute inset-0 z-20">
+          <SummaryScreen />
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <RunProvider>
+      <AppShell />
+    </RunProvider>
+  );
+}
