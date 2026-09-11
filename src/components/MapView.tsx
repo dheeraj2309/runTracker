@@ -24,7 +24,8 @@ export default function MapView({
   const lastPoint =
     points && points.length > 0 ? points[points.length - 1] : null;
   const blipPosition = lastPoint ?? (!markers ? center : null); // pre-run: show blip at current position; post-finish (markers set): no live blip
-  const trailPositions = points?.map((p) => [p.lat, p.lng] as [number, number]) ?? [];
+  const trailPositions =
+    points?.map((p) => [p.lat, p.lng] as [number, number]) ?? [];
 
   const handleRecenter = () => {
     const target = lastPoint ?? center;
@@ -67,9 +68,10 @@ export default function MapView({
         {blipPosition && !markers && (
           <CircleMarker
             center={[blipPosition.lat, blipPosition.lng]}
-            radius={8}
+            radius={9}
             pathOptions={{
-              color: isGpsLost ? "#6b7280" : "#10b981",
+              color: "#ffffff",
+              weight: 3,
               fillColor: isGpsLost ? "#6b7280" : "#10b981",
               fillOpacity: 1,
             }}
@@ -79,18 +81,20 @@ export default function MapView({
           <>
             <CircleMarker
               center={[markers.start.lat, markers.start.lng]}
-              radius={8}
+              radius={10}
               pathOptions={{
-                color: "#10b981",
+                color: "#ffffff",
+                weight: 3,
                 fillColor: "#10b981",
                 fillOpacity: 1,
               }}
             />
             <CircleMarker
               center={[markers.finish.lat, markers.finish.lng]}
-              radius={8}
+              radius={10}
               pathOptions={{
-                color: "#ef4444",
+                color: "#ffffff",
+                weight: 3,
                 fillColor: "#ef4444",
                 fillOpacity: 1,
               }}
