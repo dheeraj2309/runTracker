@@ -1,8 +1,8 @@
-import type { RunState, RunAction, Segment } from '../types/run';
+import type { RunState, RunAction, Segment } from "../types/run";
 
 export function createInitialState(): RunState {
   return {
-    status: 'idle',
+    status: "idle",
     segments: [],
     currentSegmentId: null,
     currentPosition: null,
@@ -11,8 +11,8 @@ export function createInitialState(): RunState {
 
 export function runReducer(state: RunState, action: RunAction): RunState {
   switch (action.type) {
-    case 'START': {
-      if (state.status !== 'ready') return state; // invalid transition, ignore
+    case "START": {
+      if (state.status !== "ready") return state; // invalid transition, ignore
       const newSegment: Segment = {
         id: action.payload.segmentId,
         startTime: action.payload.timestamp,
@@ -21,17 +21,18 @@ export function runReducer(state: RunState, action: RunAction): RunState {
       };
       return {
         ...state,
-        status: 'running',
+        status: "running",
         segments: [...state.segments, newSegment],
         currentSegmentId: newSegment.id,
       };
     }
 
-    case 'PAUSE': {
-      if (state.status !== 'running' || state.currentSegmentId === null) return state;
+    case "PAUSE": {
+      if (state.status !== "running" || state.currentSegmentId === null)
+        return state;
       return {
         ...state,
-        status: 'paused',
+        status: "paused",
         segments: state.segments.map((seg) =>
           seg.id === state.currentSegmentId
             ? { ...seg, endTime: action.payload.timestamp }
@@ -41,8 +42,8 @@ export function runReducer(state: RunState, action: RunAction): RunState {
       };
     }
 
-    case 'RESUME': {
-      if (state.status !== 'paused') return state;
+    case "RESUME": {
+      if (state.status !== "paused") return state;
       const newSegment: Segment = {
         id: action.payload.segmentId,
         startTime: action.payload.timestamp,
@@ -51,14 +52,14 @@ export function runReducer(state: RunState, action: RunAction): RunState {
       };
       return {
         ...state,
-        status: 'running',
+        status: "running",
         segments: [...state.segments, newSegment],
         currentSegmentId: newSegment.id,
       };
     }
 
-    case 'FINISH': {
-      if (state.status !== 'running' && state.status !== 'paused') return state;
+    case "FINISH": {
+      if (state.status !== "running" && state.status !== "paused") return state;
       const segments =
         state.currentSegmentId === null
           ? state.segments
@@ -69,14 +70,15 @@ export function runReducer(state: RunState, action: RunAction): RunState {
             );
       return {
         ...state,
-        status: 'finished',
+        status: "finished",
         segments,
         currentSegmentId: null,
       };
     }
 
-    case 'ADD_POINT': {
-      if (state.status !== 'running' || state.currentSegmentId === null) return state;
+    case "ADD_POINT": {
+      if (state.status !== "running" || state.currentSegmentId === null)
+        return state;
       return {
         ...state,
         segments: state.segments.map((seg) =>
@@ -86,21 +88,35 @@ export function runReducer(state: RunState, action: RunAction): RunState {
         ),
       };
     }
-    case 'SET_STATUS': {
+    case "SET_STATUS": {
       // Generic status setter, no transition guards yet (deferred per earlier decision).
       return { ...state, status: action.payload.status };
     }
 
-    case 'SET_POSITION': {
+    case "SET_POSITION": {
       return { ...state, currentPosition: action.payload };
     }
-    
-    case 'HYDRATE': {
+
+    case "HYDRATE": {
       return action.payload;
     }
 
-    case 'DISCARD': {
+    case "DISCARD": {
       return createInitialState();
+    }
+    case "BRIDGE_SEGMENT": {
+      if (state.status !== "paused") return state;
+      const { segmentId, point } = action.payload;
+      return {
+        ...state,
+        status: "running",
+        currentSegmentId: segmentId,
+        segments: state.segments.map((seg) =>
+          seg.id === segmentId
+            ? { ...seg, endTime: null, points: [...seg.points, point] }
+            : seg,
+        ),
+      };
     }
 
     default:

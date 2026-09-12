@@ -60,7 +60,7 @@ export default function MapView({
           <Polyline
             positions={trailPositions}
             pathOptions={{
-              color: isGpsLost ? "#6b7280" : "#10b981",
+              color: isGpsLost ? "#6b7280" : "#3b82f6",
               weight: 4,
             }}
           />
@@ -68,7 +68,7 @@ export default function MapView({
         {blipPosition && !markers && (
           <CircleMarker
             center={[blipPosition.lat, blipPosition.lng]}
-            radius={9}
+            radius={7}
             pathOptions={{
               color: "#ffffff",
               weight: 3,
@@ -81,7 +81,7 @@ export default function MapView({
           <>
             <CircleMarker
               center={[markers.start.lat, markers.start.lng]}
-              radius={10}
+              radius={6}
               pathOptions={{
                 color: "#ffffff",
                 weight: 3,
@@ -91,7 +91,7 @@ export default function MapView({
             />
             <CircleMarker
               center={[markers.finish.lat, markers.finish.lng]}
-              radius={10}
+              radius={6}
               pathOptions={{
                 color: "#ffffff",
                 weight: 3,

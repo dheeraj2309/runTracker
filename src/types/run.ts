@@ -12,7 +12,9 @@ export interface Point {
   lng: number;
   timestamp: number; // epoch ms
   accuracy?: number; // meters, from the Geolocation API's fix; absent for interpolated points
+  speed?: number; // meters/second, from GeolocationCoordinates.speed when the device provides it (Doppler-derived)
   source: PointSource;
+  skipPaceTransition?: boolean; // marks this point's incoming transition as unusable for instant pace (e.g. after a crash-recovery bridge) — the smoothed EMA carries forward unchanged instead of computing a reading across the gap
 }
 
 export interface Segment {
@@ -41,6 +43,7 @@ export type RunAction =
   | { type: "START"; payload: { timestamp: number; segmentId: string } }
   | { type: "PAUSE"; payload: { timestamp: number } }
   | { type: "RESUME"; payload: { timestamp: number; segmentId: string } }
+  | { type: 'BRIDGE_SEGMENT'; payload: { segmentId: string; point: Point } } // new — reopens an existing segment instead of starting one, for crash-recovery bridging
   | { type: "FINISH"; payload: { timestamp: number } }
   | { type: "ADD_POINT"; payload: Point }
   | { type: 'SET_STATUS'; payload: { status: RunStatus } }

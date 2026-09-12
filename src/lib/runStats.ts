@@ -1,5 +1,5 @@
 import type { Segment, Point } from '../types/run';
-import { totalDistanceMeters, calculateRollingPaceMinPerKm } from './geo-math';
+import { totalDistanceMeters, calculateSmoothedPaceMinPerKm } from './geo-math';
 
 /** Flattens all points across all segments, in chronological order. */
 export function getAllPoints(segments: Segment[]): Point[] {
@@ -33,7 +33,7 @@ export function getTotalDurationMs(segments: Segment[], now: number): number {
 export function getCurrentPaceMinPerKm(segments: Segment[]): number | null {
   if (segments.length === 0) return null;
   const lastSegment = segments[segments.length - 1];
-  return calculateRollingPaceMinPerKm(lastSegment.points);
+  return calculateSmoothedPaceMinPerKm(lastSegment.points);
 }
 
 export interface SegmentStats {
