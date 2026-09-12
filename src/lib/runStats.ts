@@ -36,6 +36,13 @@ export function getCurrentPaceMinPerKm(segments: Segment[]): number | null {
   return calculateSmoothedPaceMinPerKm(lastSegment.points);
 }
 
+function getMovingTimeMs(points: Point[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += points[i].timestamp - points[i - 1].timestamp;
+  }
+  return total;
+}
 export interface SegmentStats {
   segmentId: string;
   distanceMeters: number;
@@ -47,8 +54,11 @@ export interface SegmentStats {
 export function getSegmentStats(segment: Segment): SegmentStats {
   const distanceMeters = totalDistanceMeters(segment.points);
   const durationMs = Math.max(0, (segment.endTime ?? Date.now()) - segment.startTime);
+  const movingTimeMs = getMovingTimeMs(segment.points);
   const avgPaceMinPerKm =
-    distanceMeters === 0 ? null : durationMs / 1000 / 60 / (distanceMeters / 1000);
+    distanceMeters === 0 || movingTimeMs === 0
+      ? null
+      : movingTimeMs / 1000 / 60 / (distanceMeters / 1000);
 
   return { segmentId: segment.id, distanceMeters, durationMs, avgPaceMinPerKm };
 }
@@ -63,8 +73,13 @@ export interface OverallStats {
 export function getOverallStats(segments: Segment[], now: number): OverallStats {
   const distanceMeters = getTotalDistanceMeters(segments);
   const durationMs = getTotalDurationMs(segments, now);
+  const movingTimeMs = segments.reduce((sum, seg) => sum + getMovingTimeMs(seg.points), 0);
   const avgPaceMinPerKm =
-    distanceMeters === 0 ? null : durationMs / 1000 / 60 / (distanceMeters / 1000);
+    distanceMeters === 0 || movingTimeMs === 0
+      ? null
+      : movingTimeMs / 1000 / 60 / (distanceMeters / 1000);
 
   return { distanceMeters, durationMs, avgPaceMinPerKm };
 }
+
+
